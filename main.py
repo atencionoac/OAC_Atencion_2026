@@ -7,6 +7,7 @@ import pandas as pd
 import matplotlib
 matplotlib.use('Agg') # Evita errores de interfaz gráfica en servidores
 import matplotlib.pyplot as plt
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -92,4 +93,34 @@ def procesar_datos():
         },
         "distribucion": distribucion_estatus,
         "grafico_base64": grafico_b64
+    }
+
+class BusquedaSchema(BaseModel):
+    codigo: str
+
+@app.post("/buscar")
+def buscar_proyecto(data: BusquedaSchema):
+    # 1. Obtenemos la base de datos completa unificada (las 3 partes)
+    df = concatenar_base_de_datos()
+    
+    # Convertimos el término de búsqueda a string y limpiamos espacios
+    termino = str(data.codigo).strip()
+    
+    # Aseguramos que las columnas de búsqueda sean tratadas como texto
+    df["Código del proyecto"] = df["Código del proyecto"].astype(str).str.strip()
+    df["Código organización"] = df["Código organización"].astype(str).str.strip()
+    
+    # 2. Ejecutamos el filtro en Pandas (Busca en ambas columnas)
+    resultado = df[(df["Código del proyecto"] == termino) | (df["Código organización"] == termino)]
+    
+    # Si no encuentra nada, mandamos un mensaje de éxito pero vacío
+    if resultado.empty:
+        return {"status": "not_found", "message": f"No se encontró ningún registro con el código: {termino}"}
+    
+    # 3. Tomamos el primer registro encontrado y reemplazamos valores NaN por texto vacío
+    proyecto_info = resultado.iloc[0].fillna("").to_dict()
+    
+    return {
+        "status": "success",
+        "data": proyecto_info
     }
