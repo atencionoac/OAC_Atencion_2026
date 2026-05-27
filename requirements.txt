@@ -6,5 +6,5 @@ matplotlib==3.10.9
 Jinja2==3.1.6
 streamlit==1.57.0
 plotly==6.6.0
-st-gsheets-connection
-streamlit-cookies-controller
+st-gsheets-connection==0.1.0
+streamlit-cookies-controller==0.0.4
