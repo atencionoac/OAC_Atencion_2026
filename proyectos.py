@@ -6,28 +6,12 @@ import plotly.express as px
 # 3. Función de carga de datos
 @st.cache_data(show_spinner=False)
 def cargar_y_unificar_datos():
-    # 1. Detectamos la carpeta donde está 'proyectos.py' (paginas/) 
-    # y subimos un nivel para encontrar la raíz del proyecto
-    carpeta_paginas = os.path.dirname(__file__) if "__file__" in locals() else os.getcwd()
-    ruta_raiz = os.path.abspath(os.path.join(carpeta_paginas, ".."))
-    
-    archivos_nombres = ["hasta2024.xls", "2025.xls", "2026.xls"]
-    
-    # 2. Construimos las rutas absolutas apuntando a la raíz del proyecto
-    rutas_completas = {f: os.path.join(ruta_raiz, f) for f in archivos_nombres}
-    
-    # Verificamos si existen en la raíz
-    for nombre, ruta in rutas_completas.items():
-        if not os.path.exists(ruta):
-            # Dejamos un mensaje en la consola de VS Code para que sepas cuál falta
-            print(f"⚠️ Archivo no encontrado en la raíz: {ruta}")
-            return pd.DataFrame()
             
     try:
         # 3. Leemos los archivos usando las rutas absolutas corregidas
-        df_antiguo = pd.read_excel(rutas_completas["hasta2024.xls"], engine="xlrd")
-        df_2025 = pd.read_excel(rutas_completas["2025.xls"], engine="xlrd")
-        df_2026 = pd.read_excel(rutas_completas["2026.xls"], engine="xlrd")
+        df_antiguo = pd.read_excel("hasta2024.xls", engine="xlrd")
+        df_2025 = pd.read_excel("2025.xls", engine="xlrd")
+        df_2026 = pd.read_excel("2026.xls", engine="xlrd")
         
         df_total = pd.concat([df_antiguo, df_2025, df_2026], ignore_index=True)
         df_total["Monto del proyecto"] = pd.to_numeric(df_total["Monto del proyecto"], errors='coerce').fillna(0)
