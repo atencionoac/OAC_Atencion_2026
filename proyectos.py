@@ -19,7 +19,11 @@ def cargar_y_unificar_datos():
         
         df_total = pd.concat([df_antiguo, df_2025, df_2026], ignore_index=True)
         df_total["Monto del proyecto"] = pd.to_numeric(df_total["Monto del proyecto"], errors='coerce').fillna(0)
-        
+        df_total["Organización/Provincia/Nombre provincia"] = df_total["Organización/Provincia/Nombre provincia"].astype(str)
+        df_total =  df_total.loc[~df_total["Organización/Provincia/Nombre provincia"].str.contains("False"), ]
+        df_total["Organización/Nombre"] = df_total["Organización/Nombre"].astype(str)
+        df_total =  df_total.loc[~df_total["Organización/Nombre"].str.contains("prueba"), ]
+        df_total =  df_total.loc[~df_total["Organización/Nombre"].str.contains("False"), ]
         columnas_str = [
             "Estatus del proyecto", "Código del proyecto", "Código organización",
             "Organización/Provincia/Nombre provincia", "Organización/Municipio/Municipio", 
@@ -30,6 +34,7 @@ def cargar_y_unificar_datos():
                 df_total[col] = df_total[col].astype(str).str.strip()
                 
         return df_total
+        
     except Exception as e:
         st.error(f"🚨 Error al procesar los archivos Excel: {str(e)}")
         return pd.DataFrame()
@@ -117,8 +122,8 @@ if not df_completo.empty:
 
         # PESTAÑA 1: EXPLORADOR Y DATAFRAME
         with tab_buscador:
-            with st.container(height=600):
-                col_txt, _ = st.columns([2, 2])
+            with st.container(height=500):
+                col_titulo, col_txt = st.columns([0.5, 0.5])
                 with col_txt:
                     codigo_buscar = st.text_input("🎯 Búsqueda directa por Código (Proyecto u Organización):").strip()
 
@@ -132,10 +137,8 @@ if not df_completo.empty:
                         proyectos_organizacion = df_completo[df_completo["Código organización"] == cod_org_actual]
                         otros_proyectos = proyectos_organizacion[proyectos_organizacion["Código del proyecto"] != proyecto["Código del proyecto"]]
 
-                        st.success("✅ Expediente Localizado")
-
                         with st.container(border=True):
-                            st.subheader(f"🔍 Expediente Unificado: {proyecto['Organización/Nombre']}")
+                            #st.subheader(f"🔍 Organización Vinculada: {proyecto['Organización/Nombre']}")
                             subtab_proyecto, subtab_organizacion = st.tabs(["📋 Proyecto Consultado", "🏢 Ficha de la Organización y Registro Histórico"])
 
                             with subtab_proyecto:
@@ -152,12 +155,13 @@ if not df_completo.empty:
                                     st.write(f"**Coordenadas:** Este: {proyecto['Coordenada UTM Este x-ea.']} | Norte: {proyecto['Coordenada UTM Norte y-no.']}")
 
                             with subtab_organizacion:
-                                st.markdown("### Información Institucional")
+                                st.markdown("### Información de la Organización")
                                 co1, co2 = st.columns(2)
                                 with co1:
-                                    st.write(f"**Nombre Legal / Organización:** {proyecto['Organización/Nombre']}")
+                                    st.write(f"**Nombre de la Organización:** {proyecto['Organización/Nombre']}")
                                     st.write(f"**Código de Organización:** {proyecto['Código organización']}")
                                     st.write(f"**NIF / Identificación:** {proyecto['Organización/NIF']}")
+                                    st.write(f"**Registro de Organización:** {proyecto['Organización/Creado en']}")
                                 with co2:
                                     total_proy_org = len(proyectos_organizacion)
                                     monto_total_org = proyectos_organizacion["Monto del proyecto"].sum()
@@ -179,18 +183,19 @@ if not df_completo.empty:
                                     st.write("ℹ️ Esta organización no tiene otros proyectos adicionales registrados.")
                     else:
                         st.warning(f"⚠️ No se encontró el código '{codigo_buscar}' bajo los filtros globales actuales.")
-
-                st.subheader(f"📋 Listado de Registros ({len(df_filtrado)} encontrados)")
-                st.dataframe(
-                    df_filtrado, 
-                    width='stretch', 
-                    hide_index=True,
-                    column_order=["Código del proyecto", "Nombre del proyecto", "Organización/Nombre", "Organización/Provincia/Nombre provincia", "Organización/Municipio/Municipio", "Monto del proyecto", "Estatus del proyecto"]
-                )
+                else:
+                    with col_titulo:
+                        st.subheader(f"📋 Proyectos Registrados ({len(df_filtrado)})")
+                    st.dataframe(
+                        df_filtrado, 
+                        width='stretch', 
+                        hide_index=True,
+                        column_order=["Código del proyecto", "Nombre del proyecto", "Organización/Nombre", "Organización/Provincia/Nombre provincia", "Organización/Municipio/Municipio", "Monto del proyecto", "Estatus del proyecto"]
+                    )
 
         # PESTAÑA 2: ESTADÍSTICAS INTERACTIVAS
         with tab_estadisticas:
-            with st.container(height=600):
+            with st.container(height=500):
                 st.subheader("📉 Indicadores Dinámicos del Segmento")
 
                 total_r = len(df_filtrado)

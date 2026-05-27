@@ -156,23 +156,6 @@ else:
     # USUARIO AUTENTICADO: ENRUTADOR DE PÁGINAS DEL SISTEMA
     # =========================================================================
     
-    # Botón de cierre de sesión en la parte inferior de la barra de navegación nativa
-    # def logout():
-    #     st.session_state["autenticado"] = False
-    #     st.session_state["usuario_actual"] = ""
-    #     st.session_state["nombre_usuario"] = ""
-        
-    #     # 💥 BORRAMOS LAS COOKIES del navegador para que pida login la próxima vez
-    #     controller.remove("oac_usuario_login")
-    #     controller.remove("oac_usuario_nombre")
-    #     st.rerun()
-        
-    # col_menu, col_contenido = st.columns([4, 1])
-    # with col_contenido:
-    #     st.markdown(f"👤 **Usuario:** {st.session_state['nombre_usuario']}")
-    #     if st.button("Cerrar Sesión", type="secondary"):
-    #         logout()
-
     page_proyectos = st.Page("proyectos.py", title="Tablero de Proyectos", icon="📋")
     
     # Inicializamos el enrutador
