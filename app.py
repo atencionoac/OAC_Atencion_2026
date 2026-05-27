@@ -173,7 +173,7 @@ else:
         if st.button("Cerrar Sesión", type="secondary"):
             logout()
 
-    page_proyectos = st.Page("paginas/proyectos.py", title="Tablero de Proyectos", icon="📋")
+    page_proyectos = st.Page("proyectos.py", title="Tablero de Proyectos", icon="📋")
     
     # Inicializamos el enrutador
     pg = st.navigation([page_proyectos])
