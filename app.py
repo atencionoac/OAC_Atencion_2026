@@ -14,7 +14,7 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    .block-container { padding-top: 7rem !important; }
+    .block-container { padding-top: 3rem !important; }
     .oac-header {
         position: fixed; top: 0; left: 0; width: 100%;
         background-color: #1a365d; color: white; padding: 15px 30px;
@@ -157,21 +157,21 @@ else:
     # =========================================================================
     
     # Botón de cierre de sesión en la parte inferior de la barra de navegación nativa
-    def logout():
-        st.session_state["autenticado"] = False
-        st.session_state["usuario_actual"] = ""
-        st.session_state["nombre_usuario"] = ""
+    # def logout():
+    #     st.session_state["autenticado"] = False
+    #     st.session_state["usuario_actual"] = ""
+    #     st.session_state["nombre_usuario"] = ""
         
-        # 💥 BORRAMOS LAS COOKIES del navegador para que pida login la próxima vez
-        controller.remove("oac_usuario_login")
-        controller.remove("oac_usuario_nombre")
-        st.rerun()
+    #     # 💥 BORRAMOS LAS COOKIES del navegador para que pida login la próxima vez
+    #     controller.remove("oac_usuario_login")
+    #     controller.remove("oac_usuario_nombre")
+    #     st.rerun()
         
-    col_menu, col_contenido = st.columns([4, 1])
-    with col_contenido:
-        st.markdown(f"👤 **Usuario:** {st.session_state['nombre_usuario']}")
-        if st.button("Cerrar Sesión", type="secondary"):
-            logout()
+    # col_menu, col_contenido = st.columns([4, 1])
+    # with col_contenido:
+    #     st.markdown(f"👤 **Usuario:** {st.session_state['nombre_usuario']}")
+    #     if st.button("Cerrar Sesión", type="secondary"):
+    #         logout()
 
     page_proyectos = st.Page("proyectos.py", title="Tablero de Proyectos", icon="📋")
     
