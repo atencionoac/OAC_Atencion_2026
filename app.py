@@ -49,8 +49,11 @@ st.markdown(
 # Inicializar el controlador de cookies
 controller = CookieController()
 
-# Pequeña pausa de milisegundos imperceptible para asegurar sincronización de cookies con el navegador
-time.sleep(0.1)
+# EN LA NUBE: Damos un margen de espera un poco mayor en el primer arranque 
+# para que el puente HTTPS/JavaScript sincronice las cookies del navegador
+if "cookies_sincronizadas" not in st.session_state:
+    time.sleep(0.5)  # Medio segundo en el primer renderizado asegura la lectura en la nube
+    st.session_state["cookies_sincronizadas"] = True
 
 # Intentar leer cookies guardadas en el navegador del usuario
 cookie_usuario = controller.get("oac_usuario_login")
@@ -89,10 +92,14 @@ def verificar_credenciales(usuario_ingresado, clave_ingresada):
         return False, ""
  
 # =========================================================================
-# LÓGICA DE RENDERIZADO
+# DECLARACIÓN DE PÁGINAS Y ENRUTADOR (MANEJO ABSOLUTO DEL FLUJO)
 # =========================================================================
-if not st.session_state["autenticado"]:
-    
+
+# Declaramos la página del tablero de proyectos
+page_proyectos = st.Page("proyectos.py", title="Tablero de Proyectos", icon="📋")
+
+# Creamos una función intermedia para el Login en vez de renderizarlo suelto
+def mostrar_pantalla_login():    
     # Maquetación de la pantalla informativa con Login lateral (Proporción 4 a 8)
     col_login_box, col_info_texto = st.columns([4, 8], gap="large")
     
@@ -156,12 +163,14 @@ if not st.session_state["autenticado"]:
             
         st.info("📊 Recepción y revisión de solicitudes durante eventos externos.")
  
+# DEFINICIÓN DEL ENRUTADOR DINÁMICO
+if not st.session_state["autenticado"]:
+    # Si no está autenticado, el enrutador solo conoce y muestra la función de login
+    page_login = st.Page(mostrar_pantalla_login, title="Iniciar Sesión", icon="🔒")
+    pg = st.navigation([page_login], position="hidden") # Ocultamos la barra lateral en el login
 else:
-    # =========================================================================
-    # USUARIO AUTENTICADO: ENRUTADOR DE PÁGINAS (TODO EN RAÍZ)
-    # =========================================================================
-    # Al estar en la raíz, llamamos directamente a 'proyectos.py'
-    page_proyectos = st.Page("proyectos.py", title="Tablero de Proyectos", icon="📋")
-    
+    # Si ya está autenticado (ya sea por login directo o por cookie detectada), el enrutador activa el Dashboard
     pg = st.navigation([page_proyectos])
-    pg.run()
+
+# Ejecutamos el enrutador correspondiente
+pg.run()
