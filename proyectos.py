@@ -4,8 +4,12 @@ import os
 import plotly.express as px
 from streamlit_cookies_controller import CookieController
 
-# 1. Inicializar el controlador de cookies
-controller = CookieController()
+# 1. Configuración de página unificada para todo el sitio
+st.set_page_config(
+    page_title="Dashboard OAC - CFG",
+    page_icon="🇻🇪",
+    layout="wide"
+)
 
 # 3. Función de carga de datos
 @st.cache_data(show_spinner=False)
