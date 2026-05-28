@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import plotly.express as px
-from app.py import cerrar_sesion
+from app import cerrar_sesion
 
 
 # 3. Función de carga de datos
