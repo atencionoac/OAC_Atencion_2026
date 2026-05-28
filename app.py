@@ -1,8 +1,9 @@
 import streamlit as st
 import pandas as pd
 from streamlit_gsheets import GSheetsConnection
-from streamlit_cookies_controller import CookieController
 import time
+import base64
+import json
 
 # 1. Configuración de página unificada para todo el sitio
 st.set_page_config(
@@ -46,32 +47,64 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Inicializar el controlador de cookies
-controller = CookieController()
+# =========================================================================
+# FUNCIONES PARA MANEJO DE SESIÓN CON QUERY PARAMS
+# =========================================================================
 
-# EN LA NUBE: Damos un margen de espera un poco mayor en el primer arranque 
-# para que el puente HTTPS/JavaScript sincronice las cookies del navegador
-if "cookies_sincronizadas" not in st.session_state:
-    time.sleep(0.5)  # Medio segundo en el primer renderizado asegura la lectura en la nube
-    st.session_state["cookies_sincronizadas"] = True
+def guardar_sesion_en_url(usuario, nombre_completo):
+    """Guarda los datos de sesión en la URL como parámetro codificado"""
+    datos_sesion = {
+        "usuario": usuario,
+        "nombre": nombre_completo,
+        "autenticado": True,
+        "timestamp": time.time()
+    }
+    json_str = json.dumps(datos_sesion)
+    encoded = base64.b64encode(json_str.encode()).decode()
+    st.query_params['sesion'] = encoded
 
-# Intentar leer cookies guardadas en el navegador del usuario
-cookie_usuario = controller.get("oac_usuario_login")
-cookie_nombre = controller.get("oac_usuario_nombre")
+def cargar_sesion_desde_url():
+    """Recupera los datos de sesión desde la URL"""
+    if 'sesion' in st.query_params:
+        try:
+            encoded = st.query_params['sesion']
+            json_str = base64.b64decode(encoded).decode()
+            datos = json.loads(json_str)
+            # Verificar que la sesión no sea demasiado antigua (opcional, 30 días por defecto)
+            if time.time() - datos.get('timestamp', 0) < 2592000:  # 30 días
+                return datos
+        except Exception:
+            return None
+    return None
 
-# Inicializar el session_state basado en las cookies de forma robusta
+def limpiar_sesion_de_url():
+    """Limpia la sesión de la URL"""
+    st.query_params.clear()
+
+# =========================================================================
+# INICIALIZACIÓN DE SESIÓN
+# =========================================================================
+
+# Inicializar el session_state basado en los query params
 if "autenticado" not in st.session_state:
-    if cookie_usuario and cookie_nombre:
+    # Intentar cargar sesión desde la URL
+    datos_sesion = cargar_sesion_desde_url()
+    
+    if datos_sesion and datos_sesion.get('autenticado', False):
         st.session_state["autenticado"] = True
-        st.session_state["usuario_actual"] = cookie_usuario
-        st.session_state["nombre_usuario"] = cookie_nombre
-        st.rerun() # Forzar re-renderizado para saltar el login directamente
+        st.session_state["usuario_actual"] = datos_sesion.get('usuario', '')
+        st.session_state["nombre_usuario"] = datos_sesion.get('nombre', '')
+        # Opcional: Mostrar mensaje de bienvenida silencioso
+        st.toast(f"¡Bienvenido de vuelta, {st.session_state['nombre_usuario']}! 👋", icon="🎉")
     else:
         st.session_state["autenticado"] = False
         st.session_state["usuario_actual"] = ""
         st.session_state["nombre_usuario"] = ""
 
-# Función para validar credenciales usando el conector nativo de Streamlit
+# =========================================================================
+# FUNCIÓN DE VALIDACIÓN DE CREDENCIALES
+# =========================================================================
+
 def verificar_credenciales(usuario_ingresado, clave_ingresada):
     try:
         conn = st.connection("gsheets", type=GSheetsConnection)
@@ -90,15 +123,11 @@ def verificar_credenciales(usuario_ingresado, clave_ingresada):
     except Exception as e:
         st.error(f"Error de conexión con el validador de usuarios: {e}")
         return False, ""
- 
+
 # =========================================================================
-# DECLARACIÓN DE PÁGINAS Y ENRUTADOR (MANEJO ABSOLUTO DEL FLUJO)
+# PANTALLA DE LOGIN
 # =========================================================================
 
-# Declaramos la página del tablero de proyectos
-page_proyectos = st.Page("proyectos.py", title="Tablero de Proyectos", icon="📋")
-
-# Creamos una función intermedia para el Login en vez de renderizarlo suelto
 def mostrar_pantalla_login():    
     # Maquetación de la pantalla informativa con Login lateral (Proporción 4 a 8)
     col_login_box, col_info_texto = st.columns([4, 8], gap="large")
@@ -107,27 +136,31 @@ def mostrar_pantalla_login():
         with st.container(border=True):
             st.markdown("<h2 style='text-align: center; color: #1a365d; margin-bottom:20px;'>Login</h2>", unsafe_allow_html=True)
             
-            txt_usuario = st.text_input("Usuario", placeholder="Ingrese su usuario").strip()
+            txt_usuario = st.text_input("Usuario", placeholder="Ingrese su usuario")
             txt_clave = st.text_input("Contraseña", type="password", placeholder="********")
             
             st.markdown("<br>", unsafe_allow_html=True)
-            # CORREGIDO: Cambiado width='stretch' por use_container_width=True
+            
             if st.button("Ingresar", use_container_width=True, type="primary"):
-                es_valido, nombre_completo = verificar_credenciales(txt_usuario, txt_clave)
-                if es_valido:
-                    st.session_state["autenticado"] = True
-                    st.session_state["usuario_actual"] = txt_usuario
-                    st.session_state["nombre_usuario"] = nombre_completo
+                if txt_usuario and txt_clave:  # Validación básica
+                    es_valido, nombre_completo = verificar_credenciales(txt_usuario.strip(), txt_clave)
                     
-                    # Guardamos las cookies en el almacenamiento del navegador de forma explícita
-                    controller.set("oac_usuario_login", txt_usuario)
-                    controller.set("oac_usuario_nombre", nombre_completo)
-                    
-                    st.success(f"¡Bienvenido, {nombre_completo}!")
-                    time.sleep(0.4) # Tiempo mínimo para escribir la cookie antes de recargar
-                    st.rerun()
+                    if es_valido:
+                        # Guardar en session_state
+                        st.session_state["autenticado"] = True
+                        st.session_state["usuario_actual"] = txt_usuario.strip()
+                        st.session_state["nombre_usuario"] = nombre_completo
+                        
+                        # Guardar en la URL para persistencia
+                        guardar_sesion_en_url(txt_usuario.strip(), nombre_completo)
+                        
+                        st.success(f"¡Bienvenido, {nombre_completo}!")
+                        time.sleep(0.5)  # Pequeña pausa para mostrar el mensaje
+                        st.rerun()
+                    else:
+                        st.error("❌ Usuario o Contraseña incorrectos")
                 else:
-                    st.error("❌ Usuario o Contraseña incorrectos")
+                    st.warning("⚠️ Por favor ingrese usuario y contraseña")
                     
     with col_info_texto:
         st.markdown("<h2 style='color: #1a365d;'>¿Qué es la OAC FCI-CFG?</h2>", unsafe_allow_html=True)
@@ -162,15 +195,43 @@ def mostrar_pantalla_login():
             )
             
         st.info("📊 Recepción y revisión de solicitudes durante eventos externos.")
- 
+
+# =========================================================================
+# FUNCIÓN DE CIERRE DE SESIÓN (Para usar desde cualquier página)
+# =========================================================================
+
+def cerrar_sesion():
+    """Función global para cerrar sesión desde cualquier página"""
+    # Limpiar session_state
+    st.session_state["autenticado"] = False
+    st.session_state["usuario_actual"] = ""
+    st.session_state["nombre_usuario"] = ""
+    
+    # Limpiar la URL
+    limpiar_sesion_de_url()
+    
+    # Mostrar mensaje y redirigir
+    st.success("👋 Sesión cerrada correctamente")
+    time.sleep(0.5)
+    st.rerun()
+
+# =========================================================================
+# DECLARACIÓN DE PÁGINAS Y ENRUTADOR
+# =========================================================================
+
+# Declaramos la página del tablero de proyectos
+# Nota: Necesitarás modificar proyectos.py para que tenga un botón de cerrar sesión
+# que llame a la función cerrar_sesion()
+page_proyectos = st.Page("proyectos.py", title="Tablero de Proyectos", icon="📋")
+
 # DEFINICIÓN DEL ENRUTADOR DINÁMICO
 if not st.session_state["autenticado"]:
-    # Si no está autenticado, el enrutador solo conoce y muestra la función de login
+    # Si no está autenticado, mostrar solo la pantalla de login
     page_login = st.Page(mostrar_pantalla_login, title="Iniciar Sesión", icon="🔒")
-    pg = st.navigation([page_login], position="hidden") # Ocultamos la barra lateral en el login
+    pg = st.navigation([page_login], position="hidden")  # Ocultar barra lateral en login
 else:
-    # Si ya está autenticado (ya sea por login directo o por cookie detectada), el enrutador activa el Dashboard
+    # Si está autenticado, mostrar el dashboard
     pg = st.navigation([page_proyectos])
 
-# Ejecutamos el enrutador correspondiente
+# Ejecutar el enrutador
 pg.run()

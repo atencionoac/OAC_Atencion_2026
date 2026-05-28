@@ -2,10 +2,8 @@ import streamlit as st
 import pandas as pd
 import os
 import plotly.express as px
-from streamlit_cookies_controller import CookieController
+from app.py import cerrar_sesion
 
-# 1. Inicializar el controlador de cookies
-controller = CookieController()
 
 # 3. Función de carga de datos
 @st.cache_data(show_spinner=False)
@@ -54,15 +52,20 @@ if not df_completo.empty:
     # 💥 DISTRIBUCIÓN EN COLUMNAS DE PÁGINA (20% Filtros | 80% Contenido)
     # =========================================================================
     # Botón de cierre de sesión en la parte inferior de la barra de navegación nativa
-    def logout():
-        st.session_state["autenticado"] = False
-        st.session_state["usuario_actual"] = ""
-        st.session_state["nombre_usuario"] = ""
-        
-        # 💥 BORRAMOS LAS COOKIES del navegador para que pida login la próxima vez
-        controller.remove("oac_usuario_login")
-        controller.remove("oac_usuario_nombre")
-        st.rerun()
+    # def logout():
+    #     """Función global para cerrar sesión desde cualquier página"""
+    #     # Limpiar session_state
+    #     st.session_state["autenticado"] = False
+    #     st.session_state["usuario_actual"] = ""
+    #     st.session_state["nombre_usuario"] = ""
+
+    #     # Limpiar la URL
+    #     limpiar_sesion_de_url()
+
+    #     # Mostrar mensaje y redirigir
+    #     st.success("👋 Sesión cerrada correctamente")
+    #     time.sleep(0.5)
+    #     st.rerun()
 
     col_filtros_izq, col_contenido_der = st.columns([1, 4])
 
@@ -72,7 +75,7 @@ if not df_completo.empty:
     with col_filtros_izq:
         st.markdown(f"👤 **Usuario:** {st.session_state['nombre_usuario']}")
         if st.button("Cerrar Sesión", type="secondary"):
-            logout()
+            cerrar_sesion()
 
         st.markdown("---")
         with st.expander("🛠️ Filtros de Control"):
