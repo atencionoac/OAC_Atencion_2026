@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import os
 import plotly.express as px
-from streamlit_cookies_controller import CookieController
 
 # 1. Configuración de página unificada para todo el sitio
 st.set_page_config(
@@ -45,7 +44,6 @@ def cargar_y_unificar_datos():
 df_completo = cargar_y_unificar_datos()
 
 if not df_completo.empty:
-    
     try:
         col_evento = df_completo.columns[15]
         df_completo[col_evento] = df_completo[col_evento].astype(str).str.strip()
