@@ -12,7 +12,7 @@ st.set_page_config(
 )
 
 # 3. Función de carga de datos
-@st.cache_data(show_spinner=False)
+# @st.cache_data(show_spinner=False)
 @st.cache_resource
 def cargar_y_unificar_datos():
     try:
