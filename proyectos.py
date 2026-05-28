@@ -57,7 +57,8 @@ if not df_completo.empty:
     # =========================================================================
     # 💥 DISTRIBUCIÓN EN COLUMNAS DE PÁGINA (20% Filtros | 80% Contenido)
     # =========================================================================
-
+    st.title("📊 Dashboard Informativo CFG")
+    
     col_filtros_izq, col_contenido_der = st.columns([1, 4])
 
     # -------------------------------------------------------------------------
@@ -105,7 +106,7 @@ if not df_completo.empty:
     # COLUMNA DERECHA (80%): Panel Principal de Trabajo
     # -------------------------------------------------------------------------
     with col_contenido_der:
-        st.title("📊 Dashboard Informativo CFG")
+        
         
         tab_buscador, tab_estadisticas = st.tabs(["🔍 Explorador y Ficha Técnica", "📊 Análisis Estadístico Interactivo"])
 
