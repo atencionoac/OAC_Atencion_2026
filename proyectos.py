@@ -13,7 +13,7 @@ st.set_page_config(
 
 # 3. Función de carga de datos
 # @st.cache_data()
-# @st.cache_resource
+@st.cache_resource
 def cargar_y_unificar_datos():
     try:
         # 3. Leemos los archivos usando las rutas absolutas corregidas
