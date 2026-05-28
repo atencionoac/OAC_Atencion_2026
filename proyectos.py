@@ -15,7 +15,6 @@ st.set_page_config(
 @st.cache_data(show_spinner=False)
 @st.cache_resource
 def cargar_y_unificar_datos():
-      
     try:
         # 3. Leemos los archivos usando las rutas absolutas corregidas
         df_antiguo = pd.read_excel("hasta2024.xls", engine="xlrd")
@@ -107,10 +106,7 @@ if not df_completo.empty:
     # COLUMNA DERECHA (80%): Panel Principal de Trabajo
     # -------------------------------------------------------------------------
     with col_contenido_der:
-        
-        
-        tab_buscador, tab_estadisticas = st.tabs(["🔍 Explorador y Ficha Técnica", "📊 Análisis Estadístico Interactivo"])
-
+        tab_estadisticas, tab_buscador = st.tabs(["📊 Análisis Estadístico", "🔍 Consulta de Proyectos", ])
         # PESTAÑA 1: EXPLORADOR Y DATAFRAME
         with tab_buscador:
             with st.container(height=500):
